@@ -77,7 +77,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
 .bnav-btn.active{color:var(--gold)}
 .bnav-btn.active .bicon{transform:scale(1.1)}
 .page{display:none;padding:14px 14px 0}
-.page.active{display:block}
+.page.active{display:block;animation:pageIn .18s ease}
+/* godmode — improve tab-to-tab navigation feel: a short settle-in instead of
+   an instant cut, same easing family as the existing pinIn/shakeErr motion. */
+@keyframes pageIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:13px 14px;cursor:pointer;margin-bottom:10px;transition:box-shadow .15s,border-color .15s}
 .card:active{opacity:.92}
 .card-top{display:flex;align-items:center;gap:11px}
@@ -164,7 +167,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
 .perm-switch-track:before{position:absolute;content:"";height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .perm-switch input:checked + .perm-switch-track{background:var(--green)}
 .perm-switch input:checked + .perm-switch-track:before{transform:translateX(18px)}
-.btn{padding:11px 18px;border-radius:var(--r);border:1.5px solid var(--border2);background:#fff;color:var(--text);cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-weight:700;transition:background .15s,opacity .15s;flex:1;white-space:nowrap}
+.btn{padding:11px 18px;border-radius:var(--r);border:1.5px solid var(--border2);background:#fff;color:var(--text);cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-weight:700;transition:background .15s,opacity .15s;flex:1;white-space:nowrap;touch-action:manipulation}
 .btn:active{opacity:.85}
 .btn-gold{background:var(--gold);color:var(--black);border-color:var(--gold)}
 .btn-gold:hover,.btn-gold:active{background:var(--gold2)}
@@ -194,6 +197,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
 .filter-row::-webkit-scrollbar{display:none}
 .filter-pill{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid var(--border2);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2);white-space:nowrap;transition:all .15s}
 .filter-pill.active{background:var(--gold);color:var(--black);border-color:var(--gold)}
+/* godmode — Dashboard Fix & Date-wise Filter: active-filter chip shown above
+   a filtered list so a card-click always lands somewhere legible, with a
+   one-tap way back to 'All' — ties every summary card to its list visibly. */
+.active-filter-bar{display:none;margin-bottom:10px}
+.active-filter-chip{display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--black);font-weight:800;font-size:12px;padding:6px 8px 6px 12px;border-radius:20px}
+.active-filter-chip button{background:rgba(0,0,0,.15);border:none;color:var(--black);width:18px;height:18px;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;flex-shrink:0}
+.active-filter-chip button:active{background:rgba(0,0,0,.28)}
 .today-banner{background:linear-gradient(135deg,var(--black2),var(--black3));border-radius:var(--r-lg);padding:14px 16px;margin-bottom:14px;border:1px solid #333}
 .today-banner .tb-label{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
 .today-banner .tb-title{font-size:16px;font-weight:800;color:#fff;margin-bottom:10px}
@@ -320,11 +330,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
 .rpt-table-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border)}
 .rpt-table-head span{font-size:12px;font-weight:800;color:var(--text2)}
 .exp-btn{background:var(--black);color:var(--gold);border:1px solid #444;border-radius:8px;padding:5px 11px;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px}
-.rpt-table-wrap table{width:100%;border-collapse:collapse;font-size:12px}
-.rpt-table-wrap th{background:var(--bg3);font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.rpt-table-wrap table{width:100%;min-width:640px;border-collapse:collapse;font-size:12px}
+.rpt-table-wrap th{background:var(--bg3);font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2}
 .rpt-table-wrap td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
 .rpt-table-wrap tr:last-child td{border-bottom:none}
 .rpt-table-wrap tr:hover td{background:var(--bg2)}
+/* Scroll container for every report table: bounded height so long lists get
+   their own internal scrollbar (vertical) in addition to the horizontal
+   scroll needed on narrow screens, instead of relying on the whole page to
+   grow. touch-action + overscroll-behavior keep mobile/WebView swipes inside
+   the table smooth and stop them fighting the page's own scroll. */
+.rpt-scroll{overflow:auto;max-height:62vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-x pan-y}
+/* Sticky action column (Receipt Report's 🧾 button) — stays pinned to the
+   right edge through horizontal scroll so it's always visible and tappable
+   without having to scroll all the way over first. */
+.rpt-action-col{position:sticky;right:0;z-index:1;background:#fff;box-shadow:-6px 0 8px -6px rgba(0,0,0,.18)}
+.rpt-table-wrap th.rpt-action-col{z-index:3;background:var(--bg3);box-shadow:none}
 .rpt-empty{text-align:center;color:var(--text2);padding:2.5rem 1rem;font-size:13px}
 .rpt-back-btn{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:4px}
 .exp-btn{display:inline-flex;align-items:center;gap:5px;background:var(--black);color:var(--gold);border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
@@ -493,6 +514,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
       <div class="today-banner" id="todayBanner"></div>
       <!-- Staff shift check-in/out — hidden entirely for Owner (godmode section 4) -->
       <div id="staffAttWidget" class="satt-widget" style="display:none"></div>
+      <!-- godmode — Date-wise Filter: governs the "New" KPI + list below; Today/Last 7 Days/This Month/All Time/Custom, same pill language as every other filter row in the app. -->
+      <div class="filter-row new-range-row"></div>
+      <div class="att-date-nav new-range-custom" style="display:none;margin-bottom:10px"></div>
       <div class="stats-grid" id="statsGrid"></div>
       <!-- Attendance widget -->
       <div id="attDashWidget" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:14px"></div>
@@ -511,6 +535,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
         <button class="exp-btn" onclick="exportListCSV('dashboard')">⬇ CSV</button>
         <button class="exp-btn" style="background:var(--green-lt);color:var(--green)" onclick="exportListXLSX('dashboard')">⬇ Excel</button>
       </div>
+      <!-- godmode — Dashboard Data Accuracy: shows which card is driving this list, with a one-tap clear -->
+      <div class="active-filter-bar" id="dashActiveFilterBar"></div>
       <div id="dash-list"></div>
       <div style="height:8px"></div>
     </div>
@@ -524,6 +550,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
       <div id="mem-filter-panel" style="display:none;margin-bottom:12px">
         <div class="filter-row" id="mem-status-pills"></div>
         <div class="filter-row" id="mem-plan-pills"></div>
+        <!-- godmode — Date-wise Filter: same New-members range control as the Dashboard tab, reachable here too since this is where "New This Month" lands after a card click -->
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin:6px 0 4px">Joined (New members)</div>
+        <div class="filter-row new-range-row"></div>
+        <div class="att-date-nav new-range-custom" style="display:none;margin-bottom:10px"></div>
       </div>
       <div class="list-toolbar">
         <select id="memSortSel" onchange="setMemSort(this.value)">
@@ -535,6 +565,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
         <button class="exp-btn" onclick="exportListCSV('members')">⬇ CSV</button>
         <button class="exp-btn" style="background:var(--green-lt);color:var(--green)" onclick="exportListXLSX('members')">⬇ Excel</button>
       </div>
+      <div class="active-filter-bar" id="memActiveFilterBar"></div>
       <div id="mem-list"></div>
       <div style="height:8px"></div>
     </div>
@@ -549,6 +580,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
         <input type="date" id="callDatePicker" onchange="setCallDateFilter(this.value)">
         <button onclick="shiftCallDate(1)">&#8250;</button>
         <button onclick="clearCallDateFilter()" style="background:var(--gold);color:var(--black);border-color:var(--gold);font-weight:800;font-size:11px">All Dates</button>
+      </div>
+      <!-- godmode — Date-wise Filter: optional range end, hidden until asked for so the everyday single-day arrows stay exactly as they were -->
+      <div class="att-date-nav" id="callRangeRow" style="margin-bottom:4px;display:none">
+        <label style="font-size:11px;font-weight:700;color:var(--text2);padding-left:4px;white-space:nowrap">Through</label>
+        <input type="date" id="callDatePickerTo" onchange="setCallDateTo(this.value)">
+      </div>
+      <div style="text-align:right;margin-bottom:8px">
+        <button onclick="toggleCallRange()" id="callRangeToggleBtn" style="background:none;border:none;color:var(--text2);font-size:11px;font-weight:700;text-decoration:underline;cursor:pointer;padding:2px">+ Filter a date range</button>
       </div>
       <div class="filter-row" id="call-filter-pills"></div>
       <div style="display:flex;justify-content:flex-end;margin:10px 0"><button class="exp-btn" onclick="exportCallLogCSV()">⬇ Export CSV</button></div>
@@ -688,7 +727,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" onclick="exportRpt('memberwise')">⬇ CSV</button>
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('memberwise')">⬇ Excel</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th>ID</th><th>Name</th><th>Phone</th><th>Plan</th><th>Status</th><th>Join Date</th><th>Fee Due</th><th>Days Overdue</th>
             </tr></thead>
@@ -717,7 +756,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" onclick="exportRpt('daily')">⬇ CSV</button>
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('daily')">⬇ Excel</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th id="rDayThId" onclick="sortDailyBy('id')" style="cursor:pointer;user-select:none">ID</th><th id="rDayThName" onclick="sortDailyBy('name')" style="cursor:pointer;user-select:none">Name</th><th id="rDayThPhone" onclick="sortDailyBy('phone')" style="cursor:pointer;user-select:none">Phone</th><th id="rDayThStatus" onclick="sortDailyBy('status')" style="cursor:pointer;user-select:none">Status</th><th id="rDayThTime" onclick="sortDailyBy('time')" style="cursor:pointer;user-select:none">Check-in Time</th><th>Note</th>
             </tr></thead>
@@ -746,7 +785,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" onclick="exportRpt('weekly')">⬇ CSV</button>
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('weekly')">⬇ Excel</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th>ID</th><th>Name</th><th>Days Present</th><th>Days Absent</th><th>Attendance %</th><th>Last Seen</th>
             </tr></thead>
@@ -775,7 +814,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" onclick="exportRpt('monthly')">⬇ CSV</button>
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('monthly')">⬇ Excel</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th>ID</th><th>Name</th><th>Days Present</th><th>Days Absent</th><th>Attendance %</th><th>Best Streak</th>
             </tr></thead>
@@ -818,7 +857,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" onclick="exportRpt('renewal')">⬇ CSV</button>
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('renewal')">⬇ Excel</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th>ID</th><th>Name</th><th>Phone</th><th>Plan</th><th>Fee Due Date</th><th>Days</th><th>Status</th>
             </tr></thead>
@@ -835,11 +874,55 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
         </div>
         <div class="rpt-controls">
           <div class="ctrl-row">
+            <label>Range</label>
+            <select id="rPayRange" onchange="payRangeChanged()">
+              <option value="month" selected>Month</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+          <div class="ctrl-row" id="rPayMonthRow">
             <label>Month</label>
             <input type="month" id="rPayMonth">
-            <button class="rpt-run-btn" onclick="runPaymentReport()">Generate</button>
           </div>
-          <div style="font-size:11px;color:var(--text2)">⚠ Based on fee due dates — log payments via member edit to track actuals.</div>
+          <div class="ctrl-row" id="rPayCustomRow" style="display:none">
+            <label>From</label>
+            <input type="date" id="rPayFrom">
+            <label>To</label>
+            <input type="date" id="rPayTo">
+          </div>
+          <div class="ctrl-row">
+            <label>Member ID</label>
+            <input type="text" id="rPayMemberId" placeholder="e.g. REL0012">
+          </div>
+          <div class="ctrl-row">
+            <label>Name</label>
+            <input type="text" id="rPayMemberName" placeholder="Member name">
+          </div>
+          <div class="ctrl-row">
+            <label>Amount</label>
+            <input type="number" id="rPayAmount" placeholder="Exact ₹ amount" inputmode="decimal">
+          </div>
+          <div class="ctrl-row">
+            <label>Mode</label>
+            <select id="rPayMethod">
+              <option value="all">All Modes</option>
+              <option>Cash</option><option>UPI</option><option>Card</option>
+              <option>Bank Transfer</option><option>Cheque</option><option>Other</option>
+            </select>
+          </div>
+          <div class="ctrl-row">
+            <label>Renewal</label>
+            <select id="rPayType">
+              <option value="all">All</option>
+              <option value="renewal">Renewal</option>
+              <option value="new">New Membership</option>
+            </select>
+          </div>
+          <div class="ctrl-row">
+            <button class="rpt-run-btn" onclick="runPaymentReport()">Apply Filter</button>
+            <button class="rpt-back-btn" onclick="resetPaymentFilters()">↺ Clear / Reset</button>
+          </div>
+          <div style="font-size:11px;color:var(--text2)">⚠ "Pending" rows are estimated from fee due dates — they have no real payment yet, so Amount/Mode/Renewal filters only match already-collected rows.</div>
         </div>
         <div class="rpt-kpi-row" id="rPayKpi"></div>
         <div class="rpt-table-wrap" id="rPayTableWrap" style="display:none">
@@ -849,9 +932,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('payment')">⬇ Excel</button>
             <button class="exp-btn" style="background:var(--blue-lt);color:var(--blue);border-color:var(--blue-lt)" onclick="openPaymentImport()">📥 Import</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
-              <th>ID</th><th>Name</th><th>Phone</th><th>Plan</th><th>Fee Due</th><th>Status</th><th>Amount (₹)</th>
+              <th>Date</th><th>ID</th><th>Name</th><th>Phone</th><th>Plan</th><th>Status</th><th>Mode</th><th>Type</th><th>Amount (₹)</th><th class="rpt-action-col"></th>
             </tr></thead>
             <tbody id="rPayBody"></tbody></table>
           </div>
@@ -880,7 +963,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('payweek')">⬇ Excel</button>
             <button class="exp-btn" style="background:var(--blue-lt);color:var(--blue);border-color:var(--blue-lt)" onclick="openPaymentImport()">📥 Import</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th>Date</th><th>Receipt No.</th><th>ID</th><th>Name</th><th>Phone</th><th>Plan</th><th>Method</th><th>Ref</th><th>Amount (₹)</th>
             </tr></thead>
@@ -911,7 +994,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('paymonth')">⬇ Excel</button>
             <button class="exp-btn" style="background:var(--blue-lt);color:var(--blue);border-color:var(--blue-lt)" onclick="openPaymentImport()">📥 Import</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th>Date</th><th>Receipt No.</th><th>ID</th><th>Name</th><th>Phone</th><th>Plan</th><th>Method</th><th>Ref</th><th>Amount (₹)</th>
             </tr></thead>
@@ -944,7 +1027,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" onclick="exportRpt('staffattweek')">⬇ CSV</button>
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('staffattweek')">⬇ Excel</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th>Staff Name</th><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Working Hours</th><th>Status</th>
             </tr></thead>
@@ -978,7 +1061,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" onclick="exportRpt('staffattmonth')">⬇ CSV</button>
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('staffattmonth')">⬇ Excel</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th>Staff Name</th><th>Total Working Days</th><th>Present Days</th><th>Missing Check-In</th><th>Missing Check-Out</th><th>Total Hours</th><th>Avg Hours</th>
             </tr></thead>
@@ -987,7 +1070,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
         </div>
         <div class="rpt-table-wrap" id="rSamDetailWrap" style="display:none">
           <div class="rpt-table-head"><span id="rSamDetailCount">Date-wise detail</span></div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
               <th>Date</th><th>Check-In</th><th>Check-Out</th><th>Working Hours</th><th>Status</th>
             </tr></thead>
@@ -1050,9 +1133,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
             <button class="exp-btn" onclick="exportRpt('receipt')">⬇ Export CSV</button>
             <button class="exp-btn" style="background:var(--green-lt);color:var(--green);border-color:var(--green-lt)" onclick="exportRptXLSX('receipt')">⬇ Export Excel</button>
           </div>
-          <div style="overflow-x:auto">
+          <div class="rpt-scroll">
             <table><thead><tr>
-              <th>Date</th><th>Receipt No.</th><th>Member ID</th><th>Name</th><th>Phone</th><th>Plan</th><th>Method</th><th>Amount (₹)</th><th>Staff</th><th></th>
+              <th>Date</th><th>Receipt No.</th><th>Member ID</th><th>Name</th><th>Phone</th><th>Plan</th><th>Method</th><th>Amount (₹)</th><th>Staff</th><th class="rpt-action-col"></th>
             </tr></thead>
             <tbody id="rRcBody"></tbody></table>
           </div>
@@ -1937,6 +2020,15 @@ var payments=[];   // { id, memberId, mId, name, plan, amount, date, method, ref
 var payEntryMemberId=null;
 var dashFilter='all',memStatusFilter='all',memPlanFilter='all',callOutcomeFilter='all';
 var memFilterOpen=false,currentStaff=null,pinInput='',selectedStaffId=null;
+// godmode — Dashboard Fix & Date-wise Filter: dedicated range for "New
+// Members" (join-date based), kept separate from dashFilter/memStatusFilter
+// so it can never change what Overdue/Active/Pending/etc. show — those stay
+// exact point-in-time snapshots, unaffected by this. Defaults to 'month' so
+// existing "New This Month" behavior is unchanged until someone touches it.
+var newRangeMode='month', newRangeFrom='', newRangeTo='';
+// godmode — Calls date filter: optional range end. Blank (the default)
+// keeps the existing single-day arrow navigation exactly as it was.
+var callDateTo='';
 
 var COLORS=[
   {bg:'#FFF8E1',tx:'#7A5C00'},{bg:'#EAF3DE',tx:'#2E6B0D'},
@@ -1981,6 +2073,96 @@ function now(){return new Date().toISOString()}
 function fd(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
 function daysDiff(d){if(!d)return null;return Math.floor((Date.now()-new Date(d+'T00:00:00'))/86400000)}
 function statusLabel(s){return{active:'Active',inactive:'Inactive',pending:'Fee Pending',expired:'Expired','new':'New Member'}[s]||s}
+
+// godmode — Dashboard Fix & Date-wise Filter (see "New This Month" issue):
+// no member's status is ever literally 'new' except via a bulk-import row
+// explicitly tagged that way (see statusMap in processRawRows), so the old
+// `m.status==='new'` checks in renderDashboard()/renderMembers() matched
+// almost nothing — that's why the card showed a count but the list under it
+// came up empty. "New" actually means "joined within the selected period",
+// so isNewMember() below is the one place that decides it, reused by the
+// KPI count, the Dashboard list, and the Members list alike, so all three
+// always agree. A literal status:'new' import still matches too.
+function newRangeBounds(){
+  var t=td();
+  if(newRangeMode==='today') return {from:t,to:t};
+  if(newRangeMode==='week'){ var d=new Date(t+'T00:00:00'); d.setDate(d.getDate()-6); return {from:localDateStr(d),to:t}; }
+  if(newRangeMode==='month'){ var ym=t.slice(0,7); var yr=parseInt(ym.split('-')[0]),mo=parseInt(ym.split('-')[1]); var last=new Date(yr,mo,0).getDate(); return {from:ym+'-01',to:ym+'-'+String(last).padStart(2,'0')}; }
+  if(newRangeMode==='custom') return {from:newRangeFrom||'',to:newRangeTo||''};
+  return {from:'',to:''}; // 'all'
+}
+function newRangeLabel(){
+  if(newRangeMode==='today')return'Today';
+  if(newRangeMode==='week')return'Last 7 Days';
+  if(newRangeMode==='month')return'This Month';
+  if(newRangeMode==='custom')return (newRangeFrom&&newRangeTo)?(fd(newRangeFrom)+' – '+fd(newRangeTo)):'Custom Range';
+  return 'All Time';
+}
+function newCardLabel(){
+  if(newRangeMode==='today')return'New Today';
+  if(newRangeMode==='week')return'New (7 Days)';
+  if(newRangeMode==='month')return'New This Month';
+  if(newRangeMode==='all')return'New (All Time)';
+  return 'New ('+newRangeLabel()+')';
+}
+function isNewMember(m){
+  if(m.status==='new')return true;
+  if(!m.joinDate)return false;
+  var b=newRangeBounds();
+  if(!b.from&&!b.to)return true;
+  if(b.from&&m.joinDate<b.from)return false;
+  if(b.to&&m.joinDate>b.to)return false;
+  return true;
+}
+function setNewRange(mode){ newRangeMode=mode; renderAll(); }
+function setNewRangeCustom(el){
+  var box=el.closest('.new-range-custom');
+  newRangeFrom=box.querySelector('.new-range-from').value||'';
+  newRangeTo=box.querySelector('.new-range-to').value||'';
+  // both placements (Dashboard + Members panel) share one state — push the
+  // values into whichever copy the user didn't just type into.
+  document.querySelectorAll('.new-range-custom').forEach(function(c){
+    if(c===box)return;
+    var f=c.querySelector('.new-range-from'),t=c.querySelector('.new-range-to');
+    if(f)f.value=newRangeFrom; if(t)t.value=newRangeTo;
+  });
+  renderAll();
+}
+function renderNewRangeBar(){
+  var items=[{k:'today',l:'Today'},{k:'week',l:'Last 7 Days'},{k:'month',l:'This Month'},{k:'all',l:'All Time'},{k:'custom',l:'📅 Custom'}];
+  var pillsHtml=items.map(function(i){return '<span class="filter-pill'+(newRangeMode===i.k?' active':'')+'" onclick="setNewRange(\''+i.k+'\')">'+i.l+'</span>';}).join('');
+  document.querySelectorAll('.new-range-row').forEach(function(row){ row.innerHTML=pillsHtml; });
+  document.querySelectorAll('.new-range-custom').forEach(function(box){
+    box.style.display = newRangeMode==='custom' ? 'flex' : 'none';
+    if(newRangeMode==='custom' && !box.dataset.built){
+      box.innerHTML='<label style="font-size:11px;font-weight:700;color:var(--text2)">From</label><input type="date" class="new-range-from" value="'+newRangeFrom+'" onchange="setNewRangeCustom(this)"><label style="font-size:11px;font-weight:700;color:var(--text2)">To</label><input type="date" class="new-range-to" value="'+newRangeTo+'" onchange="setNewRangeCustom(this)">';
+      box.dataset.built='1';
+    }
+  });
+}
+// godmode — label for whichever value dashFilter currently holds, so the
+// active-filter chip below can describe it in the Dashboard tab's own words
+// (its pill set is a mix of statuses and Dashboard-only buckets like
+// "Needs Call" that Members' status pills don't have).
+function dashFilterLabel(k){
+  var map={priority:'🔥 Needs Call',overdue:'⚠️ Overdue',no_calls:'📵 Never Called',outstanding:'Outstanding',pending:'Fee Pending',active:'Active',inactive:'Inactive',expired:'Expired'};
+  if(k==='new')return newCardLabel();
+  return map[k]||statusLabel(k);
+}
+// godmode — Dashboard Data Accuracy: a small "Showing: X ✕" chip above the
+// Dashboard/Members list whenever a non-'all' filter is active, so landing
+// there from a card click is never a guess — what's showing and how to
+// clear it back to the full list are both visible in the same place.
+function renderActiveFilterBar(kind){
+  var el=document.getElementById(kind==='dash'?'dashActiveFilterBar':'memActiveFilterBar');
+  if(!el)return;
+  var val=kind==='dash'?dashFilter:memStatusFilter;
+  if(val==='all'){ el.style.display='none'; el.innerHTML=''; return; }
+  var label=kind==='dash'?dashFilterLabel(val):(val==='new'?newCardLabel():statusLabel(val));
+  var clearFn=kind==='dash'?"setDashFilter('all')":"setMemStatus('all')";
+  el.style.display='block';
+  el.innerHTML='<span class="active-filter-chip">Showing: '+label+'<button onclick="'+clearFn+'" title="Clear filter">✕</button></span>';
+}
 function timeAgo(iso){if(!iso)return'';var diff=Date.now()-new Date(iso).getTime();var m=Math.floor(diff/60000);if(m<1)return'just now';if(m<60)return m+'m ago';var h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
 
 // LOGIN
@@ -2475,6 +2657,13 @@ function savePaymentEntry(){
   cloudSave();
   closeSheet('paymentEntrySheet');
   if (currentId === m.id) openDetail(currentId);
+  // godmode: Payment Collection and Receipt Report both read straight from
+  // the `payments` array, so this new record is already correct in both —
+  // but if either report is the one currently on screen, its table was
+  // rendered before this push and won't repaint on its own. Re-run whichever
+  // one is open so the payment appears immediately, with no extra tap.
+  if (_currentRpt==='payment') runPaymentReport();
+  else if (_currentRpt==='receipt') runReceiptReport();
   viewReceipt(payRec.id, true);
 }
 
@@ -2794,7 +2983,7 @@ window.addEventListener('popstate',function(){
     showLogoutConfirm();
   }
 });
-function renderAll(){renderTodayBanner();renderStats();renderDashboard();renderMembers();renderCallLog();renderFilterPills();renderTeam();renderAttDashWidget();renderStaffAttWidget();}
+function renderAll(){renderTodayBanner();renderStats();renderNewRangeBar();renderDashboard();renderMembers();renderCallLog();renderFilterPills();renderTeam();renderAttDashWidget();renderStaffAttWidget();}
 
 function renderTodayBanner(){
   var overdue=members.filter(m=>{var d=daysDiff(m.feeDate);return d!==null&&d>0&&m.status!=='active'});
@@ -2805,8 +2994,12 @@ function renderTodayBanner(){
 }
 
 function renderStats(){
-  var now=new Date(),ym=now.getFullYear()+'-'+(String(now.getMonth()+1).padStart(2,'0'));
-  var newMembers = members.filter(function(m){ return m.joinDate && m.joinDate.startsWith(ym); });
+  // godmode — Dashboard Fix: "New This Month" used to be computed here with
+  // its own hardcoded startsWith(ym) check, while the click-through in
+  // renderDashboard()/renderMembers() checked m.status==='new' instead —
+  // two different definitions of "new" that never agreed, so the card's
+  // count and its list could never match. Both now call isNewMember().
+  var newMembers = members.filter(isNewMember);
   var overdueMembers = members.filter(function(m){ var d=daysDiff(m.feeDate); return d!==null && d>0; });
   var pendingMembers = members.filter(function(m){ return m.status==='pending'; });
   var outstandingMembers = members.filter(function(m){ return m.status==='pending'||m.status==='inactive'||m.status==='expired'; });
@@ -2822,7 +3015,7 @@ function renderStats(){
   var defs=[
     {key:'overdue',     label:'Overdue',        color:'#B3261E', val:overdueMembers.length,     icon:'⏰', amt:amtSum(overdueMembers)},
     {key:'pending',     label:'Fee Due',        color:'#884F0A', val:pendingMembers.length,      icon:'⚠️', amt:amtSum(pendingMembers)},
-    {key:'new',         label:'New This Month', color:'#0059A0', val:newMembers.length,          icon:'🆕', amt:amtSum(newMembers)},
+    {key:'new',         label:newCardLabel(),   color:'#0059A0', val:newMembers.length,          icon:'🆕', amt:amtSum(newMembers)},
     {key:'outstanding', label:'Total Outstanding',color:'#7A2E8C',val:outstandingMembers.length, icon:'💰', amt:amtSum(outstandingMembers)},
     {key:'all',     label:'Total Members', color:'#1558A0', val:members.length,                                           icon:'👥'},
     {key:'active',  label:'Active',        color:'#2E6B0D', val:members.filter(m=>m.status==='active').length,            icon:'✅'},
@@ -2926,7 +3119,11 @@ function renderDashboard(){
   var q=(document.getElementById('dash-search').value||'').toLowerCase();
   var list=members.filter(m=>{
     if(q&&!m.name.toLowerCase().includes(q)&&!(m.phone||'').includes(q)&&!(m.memberId||'').includes(q))return false;
-    if(dashFilter==='active'||dashFilter==='inactive'||dashFilter==='pending'||dashFilter==='expired'||dashFilter==='new')return m.status===dashFilter;
+    // godmode — Dashboard Fix: 'new' is a join-date bucket, not a literal
+    // status, so it gets its own check via isNewMember() instead of being
+    // lumped into the status===dashFilter equality below (see isNewMember).
+    if(dashFilter==='new')return isNewMember(m);
+    if(dashFilter==='active'||dashFilter==='inactive'||dashFilter==='pending'||dashFilter==='expired')return m.status===dashFilter;
     if(dashFilter==='priority')return m.status==='inactive'||m.status==='expired'||m.status==='pending'||!m.calls.length;
     if(dashFilter==='overdue'){var d=daysDiff(m.feeDate);return d!==null&&d>0;}
     if(dashFilter==='outstanding')return m.status==='pending'||m.status==='inactive'||m.status==='expired';
@@ -2937,13 +3134,18 @@ function renderDashboard(){
   list = promoteExactIdMatch(list,q);
   _lastDashList = list;
   renderCardList('dash-list',list);
+  renderActiveFilterBar('dash');
 }
 
 function renderMembers(){
   var q=(document.getElementById('mem-search').value||'').toLowerCase();
   var list=members.filter(m=>{
     if(q&&!m.name.toLowerCase().includes(q)&&!(m.phone||'').includes(q)&&!String(m.memberId||'').toLowerCase().includes(q))return false;
-    if(memStatusFilter!=='all'&&m.status!==memStatusFilter)return false;
+    // godmode — Dashboard Fix: same 'new' special-case as renderDashboard()
+    // above — matching by isNewMember() here too is what makes "New This
+    // Month → Click → Members" finally show the right people (see isNewMember).
+    if(memStatusFilter==='new'){ if(!isNewMember(m))return false; }
+    else if(memStatusFilter!=='all'&&m.status!==memStatusFilter)return false;
     if(memPlanFilter!=='all'&&m.plan!==memPlanFilter)return false;
     return true;
   });
@@ -2951,6 +3153,7 @@ function renderMembers(){
   list = promoteExactIdMatch(list,q);
   _lastMemberList = list;
   renderCardList('mem-list',list);
+  renderActiveFilterBar('mem');
 }
 
 function renderCardList(elId,list){
@@ -2966,14 +3169,31 @@ function renderCardList(elId,list){
 var callDateFilter = '';
 var _lastRenderedCalls = [];
 function setCallDateFilter(v){ callDateFilter = v; renderCallLog(); }
-function clearCallDateFilter(){ callDateFilter=''; var dp=document.getElementById('callDatePicker'); if(dp) dp.value=''; renderCallLog(); }
+// godmode — Date-wise Filter: clearing also drops the optional range end,
+// and the ← → single-day arrows below now do the same — stepping day to
+// day only makes sense once any "through" end date is out of the way.
+function clearCallDateFilter(){ callDateFilter=''; callDateTo=''; var dp=document.getElementById('callDatePicker'); if(dp) dp.value=''; var dt=document.getElementById('callDatePickerTo'); if(dt) dt.value=''; renderCallLog(); }
+function setCallDateTo(v){ callDateTo = v; renderCallLog(); }
+function toggleCallRange(){
+  var row=document.getElementById('callRangeRow'), btn=document.getElementById('callRangeToggleBtn');
+  var opening = row.style.display==='none';
+  if(opening){
+    row.style.display='flex'; btn.textContent='– Hide range end date';
+    if(!callDateFilter){ callDateFilter=td(); var dp=document.getElementById('callDatePicker'); if(dp) dp.value=callDateFilter; renderCallLog(); }
+  } else {
+    row.style.display='none'; btn.textContent='+ Filter a date range';
+    callDateTo=''; var dt=document.getElementById('callDatePickerTo'); if(dt) dt.value=''; renderCallLog();
+  }
+}
 function shiftCallDate(delta){
   var base = callDateFilter || td();
   var d = new Date(base+'T00:00:00');
   d.setDate(d.getDate()+delta);
   var v = localDateStr(d);
   callDateFilter = v;
+  callDateTo='';
   var dp=document.getElementById('callDatePicker'); if(dp) dp.value=v;
+  var dt=document.getElementById('callDatePickerTo'); if(dt) dt.value='';
   renderCallLog();
 }
 
@@ -2983,7 +3203,15 @@ function renderCallLog(){
   all.sort((a,b)=>b.c.date.localeCompare(a.c.date));
   if(q)all=all.filter(x=>x.m.name.toLowerCase().includes(q)||(x.m.phone||'').includes(q)||String(x.m.memberId||'').toLowerCase().includes(q));
   if(callOutcomeFilter!=='all')all=all.filter(x=>x.c.outcome===callOutcomeFilter);
-  if(callDateFilter)all=all.filter(x=>x.c.date===callDateFilter);
+  // godmode — Date-wise Filter: callDateTo (optional) turns the existing
+  // single-day filter into a range; swapping lo/hi covers picking the two
+  // dates in either order, same defensive style as promoteExactIdMatch above.
+  if(callDateFilter&&callDateTo&&callDateTo!==callDateFilter){
+    var _lo=callDateFilter<callDateTo?callDateFilter:callDateTo, _hi=callDateFilter<callDateTo?callDateTo:callDateFilter;
+    all=all.filter(x=>x.c.date>=_lo&&x.c.date<=_hi);
+  } else if(callDateFilter){
+    all=all.filter(x=>x.c.date===callDateFilter);
+  }
   _lastRenderedCalls = all;
   var el=document.getElementById('call-list');
   if(!all.length){el.innerHTML='<div class="empty"><span class="empty-icon">📞</span>No call records</div>';return;}
@@ -3008,7 +3236,7 @@ function exportCallLogCSV(){
     lines.push(['"'+x.c.date+'"','"'+(x.m.memberId||'')+'"','"'+x.m.name+'"','"'+(x.m.phone||'')+'"','"'+x.c.type+'"','"'+x.c.outcome+'"','"'+(x.c.note||'').replace(/"/g,'""')+'"','"'+caller+'"'].join(','));
   });
   var csv = lines.join('\n');
-  var label = callDateFilter ? callDateFilter : 'AllDates';
+  var label = callDateFilter ? (callDateTo && callDateTo!==callDateFilter ? callDateFilter+'_to_'+callDateTo : callDateFilter) : 'AllDates';
   downloadCSV('REL_CallLog_'+label+'_'+td()+'.csv', csv);
 }
 function outcomeStyle(o){if(o.includes('will come'))return'outcome-come';if(o.includes('renewed'))return'outcome-renewed';if(o.includes('follow-up'))return'outcome-followup';if(o==='No answer')return'outcome-noanswer';if(o==='Not reachable')return'outcome-notreachable';if(o==='Wrong number')return'outcome-wrong';return'outcome-noanswer';}
@@ -4657,7 +4885,7 @@ function openRpt(type) {
   if (type === 'daily')   { var el=document.getElementById('rDayDate');  if(el&&!el.value) el.value=today; }
   if (type === 'weekly')  { var el=document.getElementById('rWkDate');   if(el&&!el.value) el.value=today; }
   if (type === 'monthly') { var el=document.getElementById('rMonMonth'); if(el&&!el.value) el.value=ym; }
-  if (type === 'payment') { var el=document.getElementById('rPayMonth'); if(el&&!el.value) el.value=ym; }
+  if (type === 'payment') { var el=document.getElementById('rPayMonth'); if(el&&!el.value) el.value=ym; runPaymentReport(); }
   if (type === 'payweek')  { var el=document.getElementById('rPwDate');  if(el&&!el.value) el.value=today; }
   if (type === 'paymonth') { var el=document.getElementById('rPmMonth'); if(el&&!el.value) el.value=ym; }
   if (type === 'staffattweek')  { populateStaffAttStaffOptions(); var el=document.getElementById('rSawDate');  if(el&&!el.value) el.value=today; }
@@ -5065,62 +5293,130 @@ function runRenewalReport() {
 }
 
 /* ---- 6. PAYMENT COLLECTION ---- */
-function runPaymentReport() {
-  var ym = document.getElementById('rPayMonth').value;
-  if (!ym) { toast('Please pick a month'); return; }
-  // Collect members whose feeDate falls in this month.
-  // BUG FIX (godmode report audit): this used to ALSO always include every
-  // member with status='pending' regardless of which month was selected, so
-  // the same overdue members — and their amounts — kept re-appearing in every
-  // month's report (July's "Pending" total included members overdue since
-  // March, again in August, again in September...). Now scoped to the month.
-  // BUG FIX (godmode payment-amount audit): a paid/active member's amount
-  // used to always be assumed as the plan's standard price (e.g. Monthly
-  // ₹800), even when the amount actually collected via Payment Entry was
-  // different (e.g. a discounted ₹500) — so "Collected" never matched reality.
-  // "Collected" now reflects that member's real, most recent payment record;
-  // the plan price is used only to estimate what a not-yet-paid member owes,
-  // since there's no real amount on file for them yet.
-  var rows = members.map(function(m){
-    var inMonth = m.feeDate && m.feeDate.startsWith(ym);
-    var paid    = m.status === 'active';  // treat active = paid (can be refined)
-    var amt;
-    if (paid) {
-      var mPays = getMemberPayments(m).slice().sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
-      amt = mPays.length ? (Number(mPays[0].amount)||0) : (PLAN_FEES[m.plan] || 0);
-    } else {
-      amt = PLAN_FEES[m.plan] || 0;
-    }
-    return { m: m, inMonth: inMonth, amt: amt, paid: paid };
-  }).filter(function(r){ return r.inMonth; });
-  _rptData.payment = { ym: ym, rows: rows };
+function payRangeChanged(){
+  var v = document.getElementById('rPayRange').value;
+  document.getElementById('rPayMonthRow').style.display  = (v==='month')  ? '' : 'none';
+  document.getElementById('rPayCustomRow').style.display = (v==='custom') ? '' : 'none';
+}
 
-  var collected = rows.filter(function(r){ return r.paid; }).reduce(function(s,r){ return s+r.amt; },0);
-  var pending   = rows.filter(function(r){ return !r.paid; }).reduce(function(s,r){ return s+r.amt; },0);
-  var paidCt    = rows.filter(function(r){ return r.paid; }).length;
-  var pendCt    = rows.filter(function(r){ return !r.paid; }).length;
+function resetPaymentFilters(){
+  document.getElementById('rPayRange').value = 'month';
+  document.getElementById('rPayMonth').value = td().slice(0,7);
+  document.getElementById('rPayFrom').value  = '';
+  document.getElementById('rPayTo').value    = '';
+  document.getElementById('rPayMemberId').value   = '';
+  document.getElementById('rPayMemberName').value = '';
+  document.getElementById('rPayAmount').value     = '';
+  document.getElementById('rPayMethod').value = 'all';
+  document.getElementById('rPayType').value   = 'all';
+  payRangeChanged();
+  runPaymentReport();
+}
+
+// godmode: rebuilt so "Collected" is read straight from the `payments` array —
+// the exact same source Receipt Report reads — instead of being re-derived
+// per member. That's what guarantees any row shown here as Collected can
+// always be found in Receipt Report too: it's the same record, not a second
+// copy that could drift out of sync. "Pending" still comes from `members`
+// (fee due, nothing paid yet), since there's no payment to point to for those.
+function runPaymentReport() {
+  var range = document.getElementById('rPayRange').value;
+  var startStr, endStr, periodLabel;
+  if (range === 'custom') {
+    startStr = document.getElementById('rPayFrom').value;
+    endStr   = document.getElementById('rPayTo').value;
+    if (!startStr || !endStr) { toast('Pick both From and To dates'); return; }
+    periodLabel = startStr + ' to ' + endStr;
+  } else {
+    var ym = document.getElementById('rPayMonth').value;
+    if (!ym) { toast('Please pick a month'); return; }
+    var yr = parseInt(ym.split('-')[0]), mo = parseInt(ym.split('-')[1]);
+    startStr = ym + '-01';
+    endStr   = ym + '-' + String(new Date(yr, mo, 0).getDate()).padStart(2,'0');
+    periodLabel = ym;
+  }
+
+  var fMemberId   = (document.getElementById('rPayMemberId').value  || '').trim().toLowerCase();
+  var fMemberName = (document.getElementById('rPayMemberName').value|| '').trim().toLowerCase();
+  var fAmountRaw  = document.getElementById('rPayAmount').value;
+  var fAmount     = fAmountRaw !== '' ? Number(fAmountRaw) : null;
+  var fMethod     = document.getElementById('rPayMethod').value;
+  var fType       = document.getElementById('rPayType').value;
+  // A payment-specific filter (amount/mode/renewal) narrows the view to real
+  // transactions only — a not-yet-paid "Pending" row has none of those yet.
+  var paymentFilterActive = (fAmount!==null) || fMethod!=='all' || fType!=='all';
+
+  var collected = payments.filter(function(p){
+    if (!p.date || p.date < startStr || p.date > endStr) return false;
+    if (fMemberId   && String(p.memberId||'').toLowerCase().indexOf(fMemberId)===-1)   return false;
+    if (fMemberName && String(p.name||'').toLowerCase().indexOf(fMemberName)===-1)     return false;
+    if (fAmount!==null && Number(p.amount)!==fAmount) return false;
+    if (fMethod!=='all' && p.method!==fMethod) return false;
+    var isRenewal = !!p.prevFeeDate;
+    if (fType==='renewal' && !isRenewal) return false;
+    if (fType==='new' && isRenewal) return false;
+    return true;
+  }).map(function(p){
+    var mem = members.find(function(x){ return x.id===p.mId; }) || {};
+    return {
+      kind:'collected', id:p.id, date:p.date, memberId:p.memberId||'', name:p.name||'',
+      phone:mem.phone||'', plan:p.plan||'', method:p.method||'—',
+      isRenewal: !!p.prevFeeDate, amt: Number(p.amount)||0
+    };
+  });
+
+  var pending = [];
+  if (!paymentFilterActive) {
+    pending = members.filter(function(m){
+      if (!m.feeDate || m.feeDate < startStr || m.feeDate > endStr) return false;
+      if (m.status!=='pending' && m.status!=='expired') return false;
+      if (fMemberId   && String(m.memberId||'').toLowerCase().indexOf(fMemberId)===-1)   return false;
+      if (fMemberName && String(m.name||'').toLowerCase().indexOf(fMemberName)===-1)     return false;
+      return true;
+    }).map(function(m){
+      return {
+        kind:'pending', id:null, date:m.feeDate, memberId:m.memberId||'', name:m.name,
+        phone:m.phone||'', plan:m.plan, method:'—', isRenewal:null, amt: PLAN_FEES[m.plan]||0
+      };
+    });
+  }
+
+  var rows = collected.concat(pending).sort(function(a,b){ return a.date<b.date?1:(a.date>b.date?-1:0); });
+  _rptData.payment = { startStr:startStr, endStr:endStr, periodLabel:periodLabel, rows:rows };
+
+  var collectedTotal = collected.reduce(function(s,r){ return s+r.amt; }, 0);
+  var pendingTotal   = pending.reduce(function(s,r){ return s+r.amt; }, 0);
+  var paidMemberSet = {}; collected.forEach(function(r){ paidMemberSet[r.memberId||r.name] = 1; });
+  var dueMemberSet  = {}; pending.forEach(function(r){ dueMemberSet[r.memberId||r.name] = 1; });
+
   rptKpi('rPayKpi',[
-    {val:'₹'+collected.toLocaleString('en-IN'), lbl:'Collected',  color:'var(--green)'},
-    {val:'₹'+pending.toLocaleString('en-IN'),   lbl:'Pending',    color:'var(--red)'},
-    {val:paidCt,                                lbl:'Paid Members', color:'var(--blue)'},
-    {val:pendCt,                                lbl:'Due Members',  color:'var(--amber)'},
+    {val:'₹'+collectedTotal.toLocaleString('en-IN'), lbl:'Collected',    color:'var(--green)'},
+    {val:'₹'+pendingTotal.toLocaleString('en-IN'),   lbl:'Pending',      color:'var(--red)'},
+    {val:Object.keys(paidMemberSet).length,          lbl:'Paid Members', color:'var(--blue)'},
+    {val:Object.keys(dueMemberSet).length,           lbl:'Due Members',  color:'var(--amber)'},
   ]);
 
   var tbody = document.getElementById('rPayBody');
-  tbody.innerHTML = rows.map(function(r){
-    var paidColor = r.paid ? 'var(--green)' : 'var(--red)';
-    var paidLabel = r.paid ? '✅ Collected' : '⏳ Pending';
+  tbody.innerHTML = rows.length ? rows.map(function(r){
+    var isPaid = r.kind === 'collected';
+    var statusColor = isPaid ? 'var(--green)' : 'var(--red)';
+    var statusLbl   = isPaid ? '✅ Collected' : '⏳ Pending';
+    var typeTxt = r.isRenewal===null ? '—' : (r.isRenewal ? 'Renewal' : 'New');
+    var rcptBtn = isPaid ? '<button class="btn btn-gold btn-sm" style="padding:4px 10px;font-size:11px" onclick="viewReceipt(\''+r.id+'\')">🧾</button>' : '—';
     return '<tr>'
-      +'<td style="font-family:monospace;font-weight:700">'+(r.m.memberId?'#'+r.m.memberId:'—')+'</td>'
-      +'<td style="font-weight:700">'+r.m.name+'</td>'
-      +'<td style="font-family:monospace">'+(r.m.phone||'—')+'</td>'
-      +'<td>'+r.m.plan+'</td>'
-      +'<td style="white-space:nowrap">'+fd(r.m.feeDate)+'</td>'
-      +'<td><span style="color:'+paidColor+';font-weight:700">'+paidLabel+'</span></td>'
+      +'<td style="white-space:nowrap">'+fd(r.date)+'</td>'
+      +'<td style="font-family:monospace;font-weight:700">'+(r.memberId?'#'+r.memberId:'—')+'</td>'
+      +'<td style="font-weight:700">'+r.name+'</td>'
+      +'<td style="font-family:monospace">'+(r.phone||'—')+'</td>'
+      +'<td>'+r.plan+'</td>'
+      +'<td><span style="color:'+statusColor+';font-weight:700">'+statusLbl+'</span></td>'
+      +'<td>'+r.method+'</td>'
+      +'<td>'+typeTxt+'</td>'
       +'<td style="font-weight:800;text-align:right">₹'+r.amt.toLocaleString('en-IN')+'</td>'
+      +'<td class="rpt-action-col">'+rcptBtn+'</td>'
       +'</tr>';
-  }).join('');
-  document.getElementById('rPayCount').textContent = ym + ' · ' + rows.length + ' members';
+  }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--text2);padding:16px">No records match these filters.</td></tr>';
+  document.getElementById('rPayCount').textContent = periodLabel + ' · ' + rows.length + ' record' + (rows.length===1?'':'s');
   document.getElementById('rPayTableWrap').style.display = '';
 }
 
@@ -5467,7 +5763,7 @@ function runReceiptReport(){
       +'<td>'+(r.method||'—')+'</td>'
       +'<td style="font-weight:800;text-align:right">₹'+Number(r.amount||0).toLocaleString('en-IN')+'</td>'
       +'<td>'+staffName+'</td>'
-      +'<td><button class="btn btn-gold btn-sm" style="padding:4px 10px;font-size:11px" onclick="viewReceipt(\''+r.id+'\')">🧾</button></td>'
+      +'<td class="rpt-action-col"><button class="btn btn-gold btn-sm" style="padding:4px 10px;font-size:11px" onclick="viewReceipt(\''+r.id+'\')">🧾</button></td>'
       +'</tr>';
   }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--text2);padding:16px">No receipts found for this range.</td></tr>';
   document.getElementById('rRcCount').textContent = startStr+' to '+endStr+' · '+rows.length+' receipts';
@@ -5509,9 +5805,11 @@ function exportRpt(type) {
       csv += ['"'+(r.m.memberId||'')+'","'+r.m.name+'","'+(r.m.phone||'')+'","'+r.m.plan+'","'+(r.m.feeDate||'')+'","'+dlStr+'","'+statusLabel(r.m.status)+'"'].join(',')+"\n";
     });
   } else if (type === 'payment' && _rptData.payment) {
-    csv = '"Member ID","Name","Phone","Plan","Fee Due Date","Payment Status","Amount (INR)"\n';
+    csv = '"Date","Member ID","Name","Phone","Plan","Status","Mode","Type","Amount (INR)"\n';
     _rptData.payment.rows.forEach(function(r){
-      csv += ['"'+(r.m.memberId||'')+'","'+r.m.name+'","'+(r.m.phone||'')+'","'+r.m.plan+'","'+(r.m.feeDate||'')+'","'+(r.paid?'Collected':'Pending')+'","'+r.amt+'"'].join(',')+"\n";
+      var statusTxt = r.kind==='collected' ? 'Collected' : 'Pending';
+      var typeTxt = r.isRenewal===null ? '' : (r.isRenewal ? 'Renewal' : 'New Membership');
+      csv += ['"'+(r.date||'')+'","'+(r.memberId||'')+'","'+r.name+'","'+(r.phone||'')+'","'+r.plan+'","'+statusTxt+'","'+(r.method||'')+'","'+typeTxt+'","'+r.amt+'"'].join(',')+"\n";
     });
   } else if (type === 'payweek' && _rptData.payweek) {
     csv = '"Date","Receipt No","Member ID","Name","Phone","Plan","Method","Reference","Amount (INR)","Staff"\n';
@@ -5589,9 +5887,11 @@ function exportRptXLSX(type) {
       rows.push([r.m.memberId||'',r.m.name,r.m.phone||'',r.m.plan,r.m.feeDate||'',dlStr,statusLabel(r.m.status)]);
     });
   } else if (type==='payment' && _rptData.payment) {
-    header=['Member ID','Name','Phone','Plan','Fee Due Date','Payment Status','Amount (INR)'];
+    header=['Date','Member ID','Name','Phone','Plan','Status','Mode','Type','Amount (INR)'];
     _rptData.payment.rows.forEach(function(r){
-      rows.push([r.m.memberId||'',r.m.name,r.m.phone||'',r.m.plan,r.m.feeDate||'',(r.paid?'Collected':'Pending'),r.amt]);
+      var statusTxt = r.kind==='collected' ? 'Collected' : 'Pending';
+      var typeTxt = r.isRenewal===null ? '' : (r.isRenewal ? 'Renewal' : 'New Membership');
+      rows.push([r.date||'',r.memberId||'',r.name,r.phone||'',r.plan,statusTxt,r.method||'',typeTxt,r.amt]);
     });
   } else if (type==='payweek' && _rptData.payweek) {
     header=['Date','Receipt No','Member ID','Name','Phone','Plan','Method','Reference','Amount (INR)','Staff'];
