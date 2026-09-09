@@ -1188,7 +1188,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;c
     </div>
     <div class="sheet-footer">
       <button class="btn" onclick="closeSheet('memberSheet')">Cancel</button>
-      <button class="btn btn-gold" onclick="saveMember()">Save Member</button>
+      <button class="btn btn-gold" id="saveMemberBtn" onclick="saveMember()">Save Member</button>
     </div>
   </div>
 </div>
@@ -2114,7 +2114,7 @@ function avatarHtml(name, photo, cssClass, inlineStyle){
   cssClass = cssClass || 'avatar';
   inlineStyle = inlineStyle || '';
   if (photo) {
-    return '<img class="'+cssClass+' avatar-img" src="'+photo+'" style="'+inlineStyle+'" alt="">';
+    return '<img class="'+cssClass+' avatar-img" src="'+photo+'" style="'+inlineStyle+'" alt="" loading="lazy">';
   }
   var av = ac(name);
   return '<div class="'+cssClass+'" style="'+inlineStyle+';background:'+av.bg+';color:'+av.tx+'">'+ini(name)+'</div>';
@@ -3448,6 +3448,19 @@ function resolveMemberPhotoForSave(existingUrl){
     if(_memberPhotoRemoved && !_pendingMemberPhotoDataUrl){ resolve(''); return; }
     if(!_pendingMemberPhotoDataUrl){ resolve(existingUrl||''); return; }
     var dataUrl=_pendingMemberPhotoDataUrl;
+    // godmode — Save-looks-frozen fix: on a slow or blocked connection this
+    // upload could otherwise leave saveMember()'s promise pending forever,
+    // which is exactly the "tap Save, nothing happens" symptom reported —
+    // the button had no time limit and no visual state of its own (see
+    // setMemberSaveBtnLoading below for the other half of that fix). `settled`
+    // guards against the timeout AND a just-then-arriving real result both
+    // firing (which would resolve twice and could show two toasts).
+    var settled = false;
+    var safeResolve = function(url){ if(settled) return; settled = true; resolve(url); };
+    var giveUpTimer = setTimeout(function(){
+      toast('⚠️ Photo upload is taking too long — member saved without it');
+      safeResolve(existingUrl||'');
+    }, 12000);
     ensureStorageSDK(function(){
       try{
         if(!firebase.apps.length) firebase.initializeApp(GYM_FB_CONFIG);
@@ -3455,22 +3468,40 @@ function resolveMemberPhotoForSave(existingUrl){
         var path='member_photos/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.jpg';
         firebase.storage().ref().child(path).put(blob,{contentType:'image/jpeg'})
           .then(function(snap){ return snap.ref.getDownloadURL(); })
-          .then(function(url){ resolve(url); })
+          .then(function(url){ clearTimeout(giveUpTimer); safeResolve(url); })
           .catch(function(e){
+            clearTimeout(giveUpTimer);
             toast('⚠️ Photo upload failed (check Firebase Storage rules) — member saved without it');
-            resolve(existingUrl||'');
+            safeResolve(existingUrl||'');
           });
       }catch(e){
+        clearTimeout(giveUpTimer);
         toast('⚠️ Photo upload failed — member saved without it');
-        resolve(existingUrl||'');
+        safeResolve(existingUrl||'');
       }
     }, function(){
+      clearTimeout(giveUpTimer);
       toast('⚠️ Could not load photo storage — member saved without it');
-      resolve(existingUrl||'');
+      safeResolve(existingUrl||'');
     });
   });
 }
 
+// godmode — Save-looks-frozen fix (other half): immediate visual feedback
+// the instant Save Member is tapped, so it never again reads as "not
+// working" while a photo uploads in the background. Disabling the button
+// also blocks a frustrated repeat-tap from firing a second concurrent
+// save/upload for the same member while the first is still in flight.
+function setMemberSaveBtnLoading(loading){
+  var btn = document.getElementById('saveMemberBtn');
+  if(!btn) return;
+  if(loading){
+    if(!btn.dataset.origText) btn.dataset.origText = btn.textContent;
+    btn.disabled = true; btn.style.opacity='0.6'; btn.textContent = 'Saving…';
+  } else {
+    btn.disabled = false; btn.style.opacity=''; btn.textContent = btn.dataset.origText || 'Save Member';
+  }
+}
 function nextSuggestedMemberId(){
   var max=0;
   members.forEach(function(m){var n=parseInt(m.memberId,10);if(!isNaN(n)&&n>max)max=n;});
@@ -3484,6 +3515,7 @@ function openAdd(){
   document.getElementById('f-plan').value='Monthly';document.getElementById('f-status').value='active';
   document.getElementById('f-feeDate').value='';document.getElementById('f-joinDate').value=td();
   resetMemberPhotoState(null);
+  setMemberSaveBtnLoading(false);
   openSheet('memberSheet');
 }
 function openEdit(id){
@@ -3494,6 +3526,7 @@ function openEdit(id){
   document.getElementById('f-feeDate').value=m.feeDate||'';document.getElementById('f-joinDate').value=m.joinDate||'';
   document.getElementById('f-notes').value=m.notes||'';
   resetMemberPhotoState(m.photo||null);
+  setMemberSaveBtnLoading(false);
   closeSheet('detailSheet');openSheet('memberSheet');
 }
 function saveMember(){
@@ -3507,9 +3540,11 @@ function saveMember(){
   // godmode — Member Photo Upload: resolve (upload if needed) before
   // writing the member record, so m.photo always reflects what's actually
   // in Storage. Resolves immediately when the photo wasn't touched.
+  setMemberSaveBtnLoading(true);
   resolveMemberPhotoForSave(existingPhoto).then(function(photoUrl){
     if(editingId){var m=members.find(x=>x.id===editingId);m.name=name;m.memberId=memberId;m.phone=document.getElementById('f-phone').value.trim();m.plan=document.getElementById('f-plan').value;m.status=document.getElementById('f-status').value;m.feeDate=document.getElementById('f-feeDate').value;m.joinDate=document.getElementById('f-joinDate').value;m.notes=document.getElementById('f-notes').value.trim();m.photo=photoUrl;toast('Member updated!');}
     else{members.push({id:'m'+Date.now(),memberId,name,phone:document.getElementById('f-phone').value.trim(),plan:document.getElementById('f-plan').value,status:document.getElementById('f-status').value,feeDate:document.getElementById('f-feeDate').value,joinDate:document.getElementById('f-joinDate').value,notes:document.getElementById('f-notes').value.trim(),photo:photoUrl,calls:[]});toast('Member added!');}
+    setMemberSaveBtnLoading(false);
     closeSheet('memberSheet');cloudSave();
   });
 }
